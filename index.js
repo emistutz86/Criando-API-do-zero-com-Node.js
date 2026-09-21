@@ -4,88 +4,128 @@ const app = express();
 // Permite que nossa API entenda requisições no formato JSON
 app.use(express.json());
 
-// Lista de tarefas simulando um banco de dados
-let tarefas = [
-  { id: 1, titulo: "Aprender Node.js" },
-  { id: 2, titulo: "Criar uma API" }
+// Clientes simulando um banco de dados enquanto a API ainda nao usa persistencia.
+let clientes = [];
+
+const camposCliente = [
+  'nomeTitularAcao',
+  'statusProcesso',
+  'numeroProcesso',
+  'assunto',
+  'fone',
+  'email',
+  'statusPagamentos',
+  'dataContrato',
+  'valorContrato',
+  'valorEntrada',
+  'vencimento',
+  'quantidadeParcelas',
+  'valorParcela',
+  'valorQuitado',
+  'origemHonorarios',
+  'parcelas'
 ];
 
-// Rota GET: Retorna todas as tarefas
-app.get('/tarefas', (req, res) => {
-  // req = Request (o que o usuário enviou)
-  // res = Response (a nossa resposta)
+function proximoId() {
+  return clientes.reduce((maiorId, cliente) => Math.max(maiorId, cliente.id), 0) + 1;
+}
 
-  // Retornamos a lista de tarefas no formato JSON
-  res.json(tarefas);
+function clienteComCamposPermitidos(dados, id) {
+  const cliente = { id };
+
+  camposCliente.forEach((campo) => {
+    if (dados[campo] !== undefined) {
+      cliente[campo] = dados[campo];
+    }
+  });
+
+  return cliente;
+}
+
+function validarCliente(dados) {
+  if (!dados.nomeTitularAcao || typeof dados.nomeTitularAcao !== 'string') {
+    return 'O campo nomeTitularAcao e obrigatorio.';
+  }
+
+  const camposNumericos = [
+    'valorContrato',
+    'valorEntrada',
+    'quantidadeParcelas',
+    'valorParcela',
+    'valorQuitado'
+  ];
+
+  for (const campo of camposNumericos) {
+    if (dados[campo] !== undefined && (typeof dados[campo] !== 'number' || dados[campo] < 0)) {
+      return `O campo ${campo} deve ser um numero maior ou igual a zero.`;
+    }
+  }
+
+  if (dados.email !== undefined && typeof dados.email !== 'string') {
+    return 'O campo email deve ser um texto.';
+  }
+
+  if (dados.parcelas !== undefined && !Array.isArray(dados.parcelas)) {
+    return 'O campo parcelas deve ser uma lista de datas.';
+  }
+
+  return null;
+}
+
+// Rota GET: retorna todos os clientes
+app.get('/clientes', (req, res) => {
+  res.json(clientes);
 });
 
-// Uma rota de teste
 app.get('/', (req, res) => {
-  res.send('Minha primeira API está no ar!');
+  res.send('API de cadastro de clientes do escritorio de advocacia esta no ar!');
 });
 
-// Rota POST: Cria uma nova tarefa
-app.post('/tarefas', (req, res) => {
-  // O req.body contém as informações que o usuário enviou para a API
-  const tituloEnviado = req.body.titulo;
+// Rota POST: cadastra um novo cliente
+app.post('/clientes', (req, res) => {
+  const erro = validarCliente(req.body);
 
-  // Criamos um novo objeto de tarefa
-  const novaTarefa = {
-    id: tarefas.length + 1, // Gera um ID sequencial (1, 2, 3...)
-    titulo: tituloEnviado
-  };
+  if (erro) {
+    return res.status(400).json({ erro });
+  }
 
-  // Adicionamos a nova tarefa na nossa lista
-  tarefas.push(novaTarefa);
+  const novoCliente = clienteComCamposPermitidos(req.body, proximoId());
+  clientes.push(novoCliente);
 
-  // Respondemos que deu tudo certo (Status 201) e mostramos a tarefa criada
-  res.status(201).json(novaTarefa);
+  res.status(201).json(novoCliente);
 });
 
+// Rota DELETE: remove um cliente pelo identificador
+app.delete('/clientes/:id', (req, res) => {
+  const idDaRota = Number.parseInt(req.params.id, 10);
+  const index = clientes.findIndex((cliente) => cliente.id === idDaRota);
 
-// Rota DELETE: Apaga uma tarefa específica pelo ID
-app.delete('/tarefas/:id', (req, res) => {
-  // Pegamos o ID da URL (ex: /tarefas/1) e convertemos de texto para número inteiro
-  const idDaRota = parseInt(req.params.id);
-
-  // Procuramos em qual posição (índice) do array essa tarefa está
-  const index = tarefas.findIndex(tarefa => tarefa.id === idDaRota);
-
-  // Se o findIndex não achar nada, ele retorna -1. 
-  // Nesse caso, devolvemos um erro 404 (Não Encontrado).
   if (index === -1) {
-    return res.status(404).json({ erro: "Tarefa não encontrada." });
+    return res.status(404).json({ erro: 'Cliente nao encontrado.' });
   }
 
-  // O método splice remove itens do array. 
-  // Dizemos para remover 1 item a partir da posição (index) encontrada.
-  tarefas.splice(index, 1);
-
-  // Devolvemos uma mensagem de sucesso
-  res.status(200).json({ mensagem: "Tarefa apagada com sucesso!" });
+  clientes.splice(index, 1);
+  res.status(200).json({ mensagem: 'Cliente apagado com sucesso.' });
 });
 
-// Rota PUT: Atualiza o título de uma tarefa existente
-app.put('/tarefas/:id', (req, res) => {
-  // 1. Pegamos o ID da URL e convertemos para número
-  const idDaRota = parseInt(req.params.id);
+// Rota PUT: atualiza os dados enviados de um cliente existente
+app.put('/clientes/:id', (req, res) => {
+  const idDaRota = Number.parseInt(req.params.id, 10);
+  const clienteEncontrado = clientes.find((cliente) => cliente.id === idDaRota);
 
-  // 2. Pegamos o novo título que o usuário enviou no corpo da requisição (body)
-  const novoTitulo = req.body.titulo;
-
-  // 3. Procuramos a tarefa no nosso array
-  const tarefaEncontrada = tarefas.find(tarefa => tarefa.id === idDaRota);
-
-  // 4. Se não encontrar a tarefa, retornamos um erro 404
-  if (!tarefaEncontrada) {
-    return res.status(404).json({ erro: "Tarefa não encontrada." });
+  if (!clienteEncontrado) {
+    return res.status(404).json({ erro: 'Cliente nao encontrado.' });
   }
 
-  // 5. Se encontrou, atualizamos o título da tarefa
-  tarefaEncontrada.titulo = novoTitulo;
+  const dadosAtualizados = { ...clienteEncontrado, ...req.body };
+  const erro = validarCliente(dadosAtualizados);
 
-  // 6. Retornamos a tarefa atualizada como resposta
-  res.status(200).json(tarefaEncontrada);
+  if (erro) {
+    return res.status(400).json({ erro });
+  }
+
+  Object.assign(clienteEncontrado, clienteComCamposPermitidos(req.body, idDaRota));
+  res.status(200).json(clienteEncontrado);
 });
 
 const PORTA = 3000;

@@ -7,13 +7,13 @@
     },
     "item": [
         {
-            "name": "http://localhost:3000/tarefas",
+            "name": "Cadastrar cliente - http://localhost:3000/clientes",
             "request": {
                 "method": "POST",
                 "url": {
-                    "raw": "http://localhost:3000/tarefas",
+                    "raw": "http://localhost:3000/clientes",
                     "path": [
-                        "tarefas"
+                        "clientes"
                     ],
                     "protocol": "http",
                     "host": [
@@ -28,7 +28,7 @@
                             "language": "json"
                         }
                     },
-                    "raw": "{\r\n  \"titulo\": \"Teste Emi\"\r\n}"
+                    "raw": "{\r\n  \"nomeTitularAcao\": \"Maria da Silva\",\r\n  \"statusProcesso\": \"Em andamento\",\r\n  \"numeroProcesso\": \"0000000-00.0000.0.00.0000\",\r\n  \"assunto\": \"Aposentadoria\",\r\n  \"fone\": \"(00) 00000-0000\",\r\n  \"email\": \"maria@example.com\",\r\n  \"statusPagamentos\": \"Em dia\",\r\n  \"dataContrato\": \"2026-09-21\",\r\n  \"valorContrato\": 12000,\r\n  \"valorEntrada\": 2000,\r\n  \"vencimento\": \"2026-10-10\",\r\n  \"quantidadeParcelas\": 10,\r\n  \"valorParcela\": 1000,\r\n  \"valorQuitado\": 2000,\r\n  \"origemHonorarios\": \"Contrato\",\r\n  \"parcelas\": [\r\n    { \"numero\": 1, \"data\": \"2026-10-10\" }\r\n  ]\r\n}"
                 }
             }
         }
